@@ -1,58 +1,43 @@
-from flask import Flask, render_template, json, request
-from flask.ext.mysql import MySQL
+from flask import Flask, render_template, request, json
+import pymysql.cursors
 
-#from werkzeug import generate_password_hash, check_password_hash
-
-mysql = MySQL()
+# Connect to the database
+connection = pymysql.connect(host='localhost',
+                             user='username',
+                             password='password',
+                             db='db',
+                             )
 app = Flask(__name__)
 
-# MySQL configurations
-app.config['MYSQL_DATABASE_USER'] = 'root'
-app.config['MYSQL_DATABASE_PASSWORD'] = 'root'
-app.config['MYSQL_DATABASE_DB'] = 'sampdb'
-app.config['MYSQL_DATABASE_HOST'] = 'localhost'
-mysql.init_app(app)
+
+@app.route("/")
+def login():
+    return render_template('reg.html')
 
 
-
-@app.route('/')
-def main():
-    return render_template('signup.html')
-
-
-@app.route('/data',methods=['POST','GET'])
-def data():
-    try:
+@app.route('/data', methods=['POST', 'GET'])
+def signUp():
+    if request.method == 'POST':
         name = request.form['name']
         email = request.form['email']
         phone_number = request.form['phone_number']
         requirement = request.form['requirement']
+        try:
 
-        # validate the received values
-        if name and email and phone_number and requirement :
-            
-            # All Good, let's call MySQL
+            with connection.cursor() as cursor:
+                # Read a single record
+                sql = "INSERT INTO profile (name,email,phone_number,requirement) VALUES (%s, %s, %s, %s)"
+                cursor.execute(sql, (name, email, phone_number, requirement))
+                connection.commit()
+        finally:
+            connection.close()
+            return json.dumps({'Name': name,
+                               'Email': email,
+                               'Phone_Number':phone_number,
+                               'Requirement':requirement})
+    else:
+        return "error"
 
-
-
-            conn = mysql.connect()
-            cursor = conn.cursor()
-
-            cursor.callproc('profile',(name,email,phone_number,requirement))
-            #cursor.execute('INSERT INTO profile(name, email, phone_number, requirement) VALUES (%s,%s,%s,%s)',(name, email, phone_number, requirement))
-            data = cursor.fetchall()
-            print(data[0])
-
-            if len(data) is 0:
-                conn.commit()
-                return json.dumps({'message':'User created successfully !'})
-            else:
-                return json.dumps({'error':str(data[0])})
-        else:
-            return json.dumps({'html':'<span>Enter the required fields</span>'})
-
-    except Exception as e:
-        return json.dumps({'error':str(e)})
 
 if __name__ == "__main__":
-    app.run(port=5004)
+    app.run(port=5040, debug=True)
