@@ -1,0 +1,26 @@
+MySql detals:
+
+host='localhost',
+user='username',
+password='password',
+db='db'
+
+use db; 
+
+create table profile(name varchar(50), email varchar(50), phone_number varchar(50), requirement varchar(50));
+
+for gettng the records:
+select * from profile;
+
+
+
+  
+
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 
